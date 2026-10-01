@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Forest Adventure",
+      "hasCanvas": true,
+      "bodyTextLen": 254,
+      "bodyTextHash": "66add42d339969be4f1eed64d9439dfcc7f78b40b2ac83d7d349884a592c3acc",
+      "bodyTextPrefix": "A WALK THROUGH FERNWOOD Forest Adventure Wren follows a dusky pa",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Forest Adventure",
+      "hasCanvas": true,
+      "bodyTextLen": 221,
+      "bodyTextHash": "44b331063fdcd5f6deb3bdc63448209ae28928ce9b71fc68741cf638340578a8",
+      "bodyTextPrefix": "A WALK THROUGH FERNWOOD Forest Adventure Wren follows a dusky pa",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

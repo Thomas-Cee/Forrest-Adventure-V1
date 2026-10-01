@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pine: #14261c;
+  --color-moss: #3d6b45;
+  --color-parchment: #f3ead7;
+  --color-gold: #e6a23c;
+  --color-bark: #5c3d2e;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 1.25rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-pine);
+    color: var(--color-parchment);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@keyframes flame {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.flame-lit {
+  animation: flame 1.6s ease-in-out infinite;
+}
