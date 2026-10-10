@@ -94,6 +94,12 @@ export const ISO_DOOR_SHUT = "The door stays shut while the isopod still crawls.
 export const LEVEL9_OPEN =
   "The isopod is still. The door opens onto a quieter wood. Level 9 is not written yet, but the way through is yours.";
 
+export const GLADE_ENTER =
+  "A quiet glade opens ahead. A stag waits in the grass. It only charges. A bow rests on the stump. When the stag falls, the far door will open.";
+export const STAG_DOOR_SHUT = "The door stays shut while the stag still stands.";
+export const LEVEL10_OPEN =
+  "The stag is still. Past the door the wood grows older. Level 10 is not written yet, but the way through is yours.";
+
 export const GCOLS = 22;
 export const GROWS = 16;
 
@@ -496,6 +502,53 @@ export const leaf = {
   doorY: gfeet(11, 2).y,
   isoX: gfeet(11, 7).x,
   isoY: gfeet(11, 7).y,
+};
+
+function buildGlade() {
+  const tiles: Tile[][] = Array.from({ length: GROWS }, () => Array<Tile>(GCOLS).fill("grass"));
+  const stamp = (x: number, y: number) => {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const tx = x + dx;
+        const ty = y + dy;
+        if (tx <= 0 || ty <= 0 || tx >= GCOLS - 1 || ty >= GROWS - 1) continue;
+        tiles[ty][tx] = "path";
+      }
+    }
+  };
+  const pts: Array<[number, number]> = [
+    [11, 13],
+    [11, 8],
+    [11, 3],
+    [6, 11],
+    [11, 13],
+  ];
+  for (let i = 1; i < pts.length; i++) line(pts[i - 1], pts[i], stamp);
+  for (let y = 0; y < GROWS; y++) {
+    for (let x = 0; x < GCOLS; x++) {
+      if (x === 0 || y === 0 || x === GCOLS - 1 || y === GROWS - 1) {
+        if (tiles[y][x] !== "path") tiles[y][x] = "tree";
+      }
+    }
+  }
+  tiles[2][10] = "path";
+  tiles[2][11] = "path";
+  tiles[2][12] = "path";
+  return tiles;
+}
+
+export const gladeTiles = buildGlade();
+
+export const glade = {
+  tiles: gladeTiles,
+  startX: gfeet(11, 13).x,
+  startY: gfeet(11, 13).y,
+  bowX: gfeet(6, 11).x,
+  bowY: gfeet(6, 11).y,
+  doorX: gfeet(11, 2).x,
+  doorY: gfeet(11, 2).y,
+  stagX: gfeet(11, 7).x,
+  stagY: gfeet(11, 7).y,
 };
 
 function line(a: [number, number], b: [number, number], plot: (x: number, y: number) => void) {

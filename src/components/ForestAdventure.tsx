@@ -14,6 +14,7 @@ import {
   cove,
   yard,
   leaf,
+  glade,
   world,
 } from "@/game/world";
 import {
@@ -1551,6 +1552,57 @@ export function ForestAdventure() {
             ctx.restore();
           },
         });
+      } else if (sim.level === 9) {
+        if (!sim.hasBow) {
+          items.push({
+            y: glade.bowY,
+            draw: () => {
+              ctx.save();
+              ctx.translate(glade.bowX, glade.bowY);
+              ctx.fillStyle = "#5a3a22";
+              ctx.beginPath();
+              ctx.ellipse(0, 2, 14, 5, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = "#8a6240";
+              ctx.fillRect(-10, -4, 20, 8);
+              ctx.restore();
+            },
+          });
+        }
+        if (sim.stagAlive) {
+          items.push({
+            y: sim.stagY,
+            draw: () => drawSprite("fox", sim.stagX, sim.stagY, sim.x > sim.stagX),
+          });
+        }
+        items.push({
+          y: glade.doorY,
+          draw: () => {
+            ctx.save();
+            ctx.translate(glade.doorX, glade.doorY);
+            const img = images.isodoor;
+            const h = HEIGHTS.isodoor;
+            const aspect = img && img.naturalWidth > 0 ? img.naturalWidth / img.naturalHeight : 1.1;
+            const w = h * aspect;
+            ctx.fillStyle = "rgba(8, 18, 12, 0.32)";
+            ctx.beginPath();
+            ctx.ellipse(0, 2, Math.max(18, w * 0.32), 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            if (img && img.complete && img.naturalWidth > 0) {
+              ctx.drawImage(img, -w / 2, -h, w, h);
+            } else {
+              ctx.fillStyle = "#6a6258";
+              ctx.beginPath();
+              ctx.ellipse(0, -h * 0.45, w * 0.4, h * 0.28, 0, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.fillStyle = sim.stagAlive ? "#1a120c" : "#e6a23c";
+            ctx.beginPath();
+            ctx.arc(0, -h * 0.4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          },
+        });
       }
 
       const bob = sim.moving && !reduceRef.current ? Math.sin(sim.bob) * 2.4 : 0;
@@ -1582,6 +1634,16 @@ export function ForestAdventure() {
               const w = h * (img.naturalWidth / img.naturalHeight);
               ctx.drawImage(img, -w / 2, -h, w, h);
             }
+            ctx.restore();
+          }
+          if (sim.hasBow && sim.level === 9) {
+            ctx.save();
+            const flip = sim.facing === "left" ? -1 : 1;
+            ctx.translate(sim.x + flip * 12, sim.y - 26 + bob);
+            ctx.scale(flip, 1);
+            ctx.rotate(sim.swing > 0 ? -0.8 : -0.3);
+            ctx.fillStyle = "#8a6240";
+            ctx.fillRect(-8, -4, 16, 8);
             ctx.restore();
           }
           if (sim.level === 4 && sim.hasCorn) {

@@ -24,11 +24,15 @@ import {
   LEAF_ENTER,
   ISO_DOOR_SHUT,
   LEVEL9_OPEN,
+  GLADE_ENTER,
+  STAG_DOOR_SHUT,
+  LEVEL10_OPEN,
   ducklings,
   den,
   cove,
   yard,
   leaf,
+  glade,
   grove,
   marsh,
   pond,
@@ -70,7 +74,7 @@ export interface Sim {
   line: string;
   note: string;
   particles: Particle[];
-  level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   hasSword: boolean;
   hasKey: boolean;
   hasGun: boolean;
@@ -78,6 +82,7 @@ export interface Sim {
   hasPistol: boolean;
   hasBlaster: boolean;
   hasStick: boolean;
+  hasBow: boolean;
   hasCorn: boolean;
   fed: Set<string>;
   duckT: number;
@@ -114,6 +119,10 @@ export interface Sim {
   isoY: number;
   isoHp: number;
   isoAlive: boolean;
+  stagX: number;
+  stagY: number;
+  stagHp: number;
+  stagAlive: boolean;
 }
 
 export interface SaveData {
@@ -125,7 +134,7 @@ export interface SaveData {
   found: string[];
   talked: string[];
   won: boolean;
-  level?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  level?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   hasSword?: boolean;
   hasKey?: boolean;
   hasGun?: boolean;
@@ -133,6 +142,7 @@ export interface SaveData {
   hasPistol?: boolean;
   hasBlaster?: boolean;
   hasStick?: boolean;
+  hasBow?: boolean;
   hasCorn?: boolean;
   fed?: string[];
   hp?: number;
@@ -164,6 +174,10 @@ export interface SaveData {
   isoY?: number;
   isoHp?: number;
   isoAlive?: boolean;
+  stagX?: number;
+  stagY?: number;
+  stagHp?: number;
+  stagAlive?: boolean;
 }
 
 let forced: Set<string> | null = null;
@@ -196,6 +210,7 @@ export function freshSim(): Sim {
     hasPistol: false,
     hasBlaster: false,
     hasStick: false,
+    hasBow: false,
     hasCorn: false,
     fed: new Set(),
     duckT: 0,
@@ -232,6 +247,10 @@ export function freshSim(): Sim {
     isoY: leaf.isoY,
     isoHp: 10,
     isoAlive: true,
+    stagX: glade.stagX,
+    stagY: glade.stagY,
+    stagHp: 8,
+    stagAlive: true,
   };
 }
 
@@ -243,13 +262,14 @@ export function simFromSave(save: SaveData): Sim {
   sim.lit = new Set(save.lit);
   sim.found = new Set(save.found);
   sim.talked = new Set(save.talked);
-  sim.level = save.level === 8 ? 8 : save.level === 7 ? 7 : save.level === 6 ? 6 : save.level === 5 ? 5 : save.level === 4 ? 4 : save.level === 3 ? 3 : save.level === 2 ? 2 : 1;
+  sim.level = save.level === 9 ? 9 : save.level === 8 ? 8 : save.level === 7 ? 7 : save.level === 6 ? 6 : save.level === 5 ? 5 : save.level === 4 ? 4 : save.level === 3 ? 3 : save.level === 2 ? 2 : 1;
   sim.hasSword = sim.level === 2 && !!save.hasSword;
   sim.hasGun = sim.level === 3 && !!save.hasGun;
   sim.hasRifle = sim.level === 5 && !!save.hasRifle;
   sim.hasPistol = sim.level === 6 && !!save.hasPistol;
   sim.hasBlaster = sim.level === 7 && !!save.hasBlaster;
   sim.hasStick = sim.level === 8 && !!save.hasStick;
+  sim.hasBow = sim.level === 9 && !!save.hasBow;
   sim.hasCorn = !!save.hasCorn;
   sim.fed = new Set(save.fed ?? []);
   sim.hasKey = (sim.level === 2 || sim.level === 4) && !!save.hasKey;
@@ -283,6 +303,10 @@ export function simFromSave(save: SaveData): Sim {
   sim.isoHp = save.isoHp ?? 10;
   if (typeof save.isoX === "number") sim.isoX = save.isoX;
   if (typeof save.isoY === "number") sim.isoY = save.isoY;
+  sim.stagAlive = save.stagAlive !== false;
+  sim.stagHp = save.stagHp ?? 8;
+  if (typeof save.stagX === "number") sim.stagX = save.stagX;
+  if (typeof save.stagY === "number") sim.stagY = save.stagY;
   if (save.won) {
     sim.mode = "won";
     sim.speaker = "Fernwood";
@@ -310,6 +334,7 @@ export function toSave(sim: Sim): SaveData {
     hasPistol: sim.hasPistol,
     hasBlaster: sim.hasBlaster,
     hasStick: sim.hasStick,
+    hasBow: sim.hasBow,
     hasCorn: sim.hasCorn,
     fed: [...(sim.fed ?? [])],
     hp: sim.hp,
@@ -341,6 +366,10 @@ export function toSave(sim: Sim): SaveData {
     isoY: sim.isoY,
     isoHp: sim.isoHp,
     isoAlive: sim.isoAlive,
+    stagX: sim.stagX,
+    stagY: sim.stagY,
+    stagHp: sim.stagHp,
+    stagAlive: sim.stagAlive,
   };
 }
 
@@ -371,6 +400,7 @@ function moveVector(keys: Set<string>, stick: { x: number; y: number }) {
 }
 
 function feetBlocked(sim: Sim, x: number, y: number) {
+  if (sim.level === 9) return blockedOn(glade.tiles, GCOLS, GROWS, x, y);
   if (sim.level === 8) return blockedOn(leaf.tiles, GCOLS, GROWS, x, y);
   if (sim.level === 7) return blockedOn(yard.tiles, GCOLS, GROWS, x, y);
   if (sim.level === 6) return blockedOn(cove.tiles, GCOLS, GROWS, x, y);
@@ -540,6 +570,7 @@ export function enterLeaf(sim: Sim) {
   sim.hasPistol = false;
   sim.hasBlaster = false;
   sim.hasStick = false;
+  sim.hasBow = false;
   sim.hasKey = false;
   sim.hasCorn = false;
   sim.hp = 5;
@@ -557,6 +588,35 @@ export function enterLeaf(sim: Sim) {
   burst(sim, sim.x, sim.y, 14);
 }
 
+export function enterGlade(sim: Sim) {
+  sim.level = 9;
+  sim.x = glade.startX;
+  sim.y = glade.startY;
+  sim.facing = "up";
+  sim.hasSword = false;
+  sim.hasGun = false;
+  sim.hasRifle = false;
+  sim.hasPistol = false;
+  sim.hasBlaster = false;
+  sim.hasStick = false;
+  sim.hasBow = false;
+  sim.hasKey = false;
+  sim.hasCorn = false;
+  sim.hp = 5;
+  sim.hurt = 0;
+  sim.swing = 0;
+  sim.shots = [];
+  sim.stagX = glade.stagX;
+  sim.stagY = glade.stagY;
+  sim.stagHp = 8;
+  sim.stagAlive = true;
+  sim.mode = "talk";
+  sim.speaker = "Fernwood";
+  sim.line = GLADE_ENTER;
+  sim.note = "Take the bow. The stag only charges.";
+  burst(sim, sim.x, sim.y, 14);
+}
+
 function facingStep(facing: Sim["facing"]) {
   if (facing === "left") return { x: -1, y: 0 };
   if (facing === "right") return { x: 1, y: 0 };
@@ -565,19 +625,20 @@ function facingStep(facing: Sim["facing"]) {
 }
 
 export function shoot(sim: Sim) {
+  const bow = sim.level === 9 && sim.hasBow;
   const blaster = sim.level === 7 && sim.hasBlaster;
   const pistol = sim.level === 6 && sim.hasPistol;
   const rifle = sim.level === 5 && sim.hasRifle;
   const gun = sim.level === 3 && sim.hasGun;
-  if ((!blaster && !pistol && !rifle && !gun) || sim.mode !== "play" || sim.swing > 0) return;
-  sim.swing = blaster || pistol || rifle ? 0.48 : 0.42;
+  if ((!bow && !blaster && !pistol && !rifle && !gun) || sim.mode !== "play" || sim.swing > 0) return;
+  sim.swing = bow || blaster || pistol || rifle ? 0.48 : 0.42;
   const dir = facingStep(sim.facing);
-  if (blaster || pistol || rifle) {
+  if (bow || blaster || pistol || rifle) {
     sim.shots.push({
       x: sim.x + dir.x * 20,
       y: sim.y - 22 + dir.y * 16,
-      vx: dir.x * (blaster ? 760 : pistol ? 700 : 640),
-      vy: dir.y * (blaster ? 760 : pistol ? 700 : 640),
+      vx: dir.x * (bow ? 520 : blaster ? 760 : pistol ? 700 : 640),
+      vy: dir.y * (bow ? 520 : blaster ? 760 : pistol ? 700 : 640),
       life: 0.4,
     });
     return;
@@ -701,6 +762,7 @@ export function step(sim: Sim, dt: number, keys: Set<string>, stick: { x: number
       flyShots(sim, dt);
     }
     if (sim.level === 8) chaseIso(sim, dt);
+    if (sim.level === 9) chaseStag(sim, dt);
   } else {
     sim.moving = false;
   }
@@ -869,6 +931,30 @@ function chaseIso(sim: Sim, dt: number) {
   }
 }
 
+function chaseStag(sim: Sim, dt: number) {
+  if (sim.level !== 9 || !sim.stagAlive) return;
+  const dx = sim.x - sim.stagX;
+  const dy = sim.y - sim.stagY;
+  const dist = Math.hypot(dx, dy) || 1;
+  const nx = sim.stagX + (dx / dist) * 78 * dt;
+  const ny = sim.stagY + (dy / dist) * 78 * dt;
+  if (!blockedOn(glade.tiles, GCOLS, GROWS, nx, sim.stagY)) sim.stagX = nx;
+  if (!blockedOn(glade.tiles, GCOLS, GROWS, sim.stagX, ny)) sim.stagY = ny;
+  if (dist < 58 && sim.hurt <= 0) {
+    sim.hp -= 1;
+    sim.hurt = 0.85;
+    const ang = Math.atan2(sim.y - sim.stagY, sim.x - sim.stagX);
+    const px = sim.x + Math.cos(ang) * 28;
+    const py = sim.y + Math.sin(ang) * 28;
+    if (!feetBlocked(sim, px, sim.y)) sim.x = px;
+    if (!feetBlocked(sim, sim.x, py)) sim.y = py;
+    sim.note = "The stag only charges.";
+    if (sim.hp <= 0) {
+      restartTrail(sim, "The stag caught Wren. The trail must be walked again from the start.");
+    }
+  }
+}
+
 function hopFrog(sim: Sim, dt: number) {
   if (!sim.frogAlive) return;
   sim.hop -= dt;
@@ -976,6 +1062,20 @@ function flyShots(sim: Sim, dt: number) {
           sim.dogHp = 0;
           sim.note = "The three-headed dog is down. The door will open.";
           burst(sim, sim.dogX, sim.dogY, 16);
+        }
+      }
+    }
+    if (sim.level === 9 && sim.stagAlive && !tagged) {
+      if (Math.hypot(shot.x - sim.stagX, shot.y - (sim.stagY - 42)) < 56) {
+        tagged = true;
+        shot.life = 0;
+        sim.stagHp -= 1;
+        burst(sim, sim.stagX, sim.stagY, 6);
+        if (sim.stagHp <= 0) {
+          sim.stagAlive = false;
+          sim.stagHp = 0;
+          sim.note = "The stag is down. The door will open.";
+          burst(sim, sim.stagX, sim.stagY, 16);
         }
       }
     }
@@ -1153,6 +1253,29 @@ export function nearestPrompt(sim: Sim): { actor: Actor; label: string } | null 
     spots.push({
       actor: { id: "door", kind: "oak", x: leaf.doorX, y: leaf.doorY, name: "Door" },
       label: sim.isoAlive ? "The door is shut" : "Open the door",
+    });
+    let pick: { actor: Actor; label: string } | null = null;
+    let bestD = 70;
+    for (const spot of spots) {
+      const d = Math.hypot(spot.actor.x - sim.x, spot.actor.y - sim.y);
+      if (d < bestD) {
+        bestD = d;
+        pick = spot;
+      }
+    }
+    return pick;
+  }
+  if (sim.level === 9) {
+    const spots: Array<{ actor: Actor; label: string }> = [];
+    if (!sim.hasBow) {
+      spots.push({
+        actor: { id: "bow", kind: "oak", x: glade.bowX, y: glade.bowY, name: "Bow" },
+        label: "Take the bow",
+      });
+    }
+    spots.push({
+      actor: { id: "door", kind: "oak", x: glade.doorX, y: glade.doorY, name: "Door" },
+      label: sim.stagAlive ? "The door is shut" : "Open the door",
     });
     let pick: { actor: Actor; label: string } | null = null;
     let bestD = 70;
@@ -1349,11 +1472,32 @@ export function interact(sim: Sim) {
         sim.line = ISO_DOOR_SHUT;
         return;
       }
+      enterGlade(sim);
+      return;
+    }
+    return;
+  }
+  if (sim.level === 9) {
+    const hit = nearestPrompt(sim);
+    if (!hit) return;
+    if (hit.actor.id === "bow") {
+      sim.hasBow = true;
+      burst(sim, glade.bowX, glade.bowY, 10);
+      sim.note = "Space fires the bow. Face the stag, then fire.";
+      return;
+    }
+    if (hit.actor.id === "door") {
+      if (sim.stagAlive) {
+        sim.mode = "talk";
+        sim.speaker = "The far door";
+        sim.line = STAG_DOOR_SHUT;
+        return;
+      }
       sim.mode = "won";
       sim.speaker = "Fernwood";
-      sim.line = LEVEL9_OPEN;
+      sim.line = LEVEL10_OPEN;
       sim.note = "The door is open.";
-      burst(sim, leaf.doorX, leaf.doorY, 16);
+      burst(sim, glade.doorX, glade.doorY, 16);
     }
     return;
   }
